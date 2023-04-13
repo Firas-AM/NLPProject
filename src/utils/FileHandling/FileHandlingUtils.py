@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import pandas as pd
+import sentencepiece as spm
+
 import nltk
 import re
 
 from typing import Any
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
+from nltk.tokenize.treebank import TreebankWordDetokenizer
 
 
-class DataLoader(object):
+class DataProcesser(object):
     nltk.download('wordnet')
     nltk.download('punkt')
     nltk.download('averaged_perceptron_tagger')
@@ -23,7 +26,14 @@ class DataLoader(object):
             to_split_sentence: bool = True,
             to_filter_one_char_words: bool = True,
             to_lemmatize: bool = True,
-            lemmatizer: Any = WordNetLemmatizer
+            to_subword_tokenize: bool = True,
+            lemmatizer: Any = WordNetLemmatizer,
+            subword_tokenizer_trainer: Any = spm.SentencePieceTrainer,
+            subword_tokenizer: Any = spm.SentencePieceProcessor,
+            target_vocabulary_size: int = 4000, 
+            corpus_dump_file: str = "../data/corpus.txt",
+            tokenizer_model_type: str ="bpe",
+            tokenizer_model_prefix: str = "subword_tokenizer"
         ) -> None:
 
         self.file_name = file_name
@@ -34,6 +44,13 @@ class DataLoader(object):
         self.to_split_sentence = to_split_sentence
         self.to_filter_one_char_words = to_filter_one_char_words
         self.to_lemmatize = to_lemmatize
+        self.to_subword_tokenize = to_subword_tokenize
+        self.corpus_dump_file = corpus_dump_file
+        self.lemmatizer = lemmatizer()
+        self.subword_tokenizer_trainer = subword_tokenizer_trainer
+        self.target_vocabulary_size = target_vocabulary_size
+        self.tokenizer_model_type = tokenizer_model_type
+        self.tokenizer_model_prefix = tokenizer_model_prefix
         self.rename_map = {
             0: "polarity",
             1: "aspect_category",
@@ -47,9 +64,15 @@ class DataLoader(object):
             header = self.header
         )
         self.data_frame = self.data_frame.rename(columns = self.rename_map)
-        
-        self.lemmatizer = lemmatizer()
 
+        self.__write_corpus_file()
+
+        self.__train_subword_tokenizer()
+        self.subword_tokenizer = subword_tokenizer()
+        
+        self.subword_tokenizer.load(".\subword_tokenizer_trainer.model")
+
+        
     @staticmethod
     def __lowercase(
             sentence: str
@@ -67,6 +90,14 @@ class DataLoader(object):
             sentence: str
         ) -> list[str]:
         return nltk.word_tokenize(sentence)
+
+    @staticmethod
+    def __detokenize_sentence(
+            tokenized_sentence: list[str]
+        ) -> str:
+        detokenizer = TreebankWordDetokenizer()
+        detokenized_sentence = detokenizer.detokenize(tokenized_sentence)
+        return detokenized_sentence
 
     @staticmethod
     def __filter_one_char_words(
@@ -115,6 +146,27 @@ class DataLoader(object):
         ]
         return lemmatized_sentence
 
+    def __write_corpus_file(
+            self,
+        ) -> None:
+        with open(self.corpus_dump_file, "w+") as dump_file_handle:
+            for sentence in self.data_frame["sentence"]:
+                dump_file_handle.write(sentence)
+                dump_file_handle.write("\n")
+
+    def __train_subword_tokenizer(
+            self, 
+        ) -> None:
+        train_arg_string = f"--input={self.corpus_dump_file} --vocab_size={self.target_vocabulary_size} --model_prefix={self.tokenizer_model_prefix} --model_type={self.tokenizer_model_type}"
+        self.subword_tokenizer_trainer.train(train_arg_string)
+
+    def __subword_tokenize_sentence(
+            self, 
+            sentence: str
+        ) -> list[str]:
+        tokenized_sentence = self.subword_tokenizer.encode_as_pieces(sentence)
+        return tokenized_sentence
+
     def preprocess_text(
             self,
         ) -> None:
@@ -123,18 +175,26 @@ class DataLoader(object):
         1) Lowercase the sentence
         2) Replace non-alphabetic characters from sentence
         
-        """
-        remove_non_alphabetic_characters = lambda s: re.sub("[^a-z0-9\s]", " ", s)
-        filter_one_char_words = lambda l: [w for w in l if len(w) > 1]
-        
+        """        
         if self.to_lowercase:
-            self.data_frame["sentence"] = self.data_frame["sentence"].map(self.__lowercase)
+            self.data_frame["sentence"] = self.data_frame["sentence"].\
+                map(self.__lowercase)
         if self.to_remove_non_alphabetic_characters:
-            self.data_frame["sentence"] = self.data_frame["sentence"].map(self.__remove_non_alphabetic_characters)
+            self.data_frame["sentence"] = self.data_frame["sentence"].\
+                map(self.__remove_non_alphabetic_characters)
         if self.to_split_sentence:
-            self.data_frame["sentence"] = self.data_frame["sentence"].map(self.__tokenize_sentence)
+            self.data_frame["sentence"] = self.data_frame["sentence"].\
+                map(self.__tokenize_sentence)
         if self.to_filter_one_char_words:
-            self.data_frame["sentence"] = self.data_frame["sentence"].map(self.__filter_one_char_words)
+            self.data_frame["sentence"] = self.data_frame["sentence"].\
+                map(self.__filter_one_char_words)
         if self.to_lemmatize:
-            self.data_frame["sentence"] = self.data_frame["sentence"].map(self.__lemmatize)
-        
+            self.data_frame["sentence"] = self.data_frame["sentence"].\
+                map(self.__lemmatize)
+        if self.to_subword_tokenize and self.tokenizer_model_type != "word":
+            self.data_frame["sentence"] = self.data_frame["sentence"].\
+                map(self.__detokenize_sentence).\
+                map(self.__subword_tokenize_sentence)
+        if  self.to_subword_tokenize and self.tokenizer_model_type == "word":
+            self.data_frame["sentence"] = self.data_frame["sentence"].\
+                map(self.__subword_tokenize_sentence)    
