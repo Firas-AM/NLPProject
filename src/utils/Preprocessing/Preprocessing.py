@@ -8,7 +8,7 @@ import re
 
 from typing import Any
 from nltk.stem import WordNetLemmatizer
-from nltk.corpus import wordnet
+from nltk.corpus import wordnet, stopwords
 from nltk.tokenize.treebank import TreebankWordDetokenizer
 
 
@@ -16,6 +16,7 @@ class DataProcesser(object):
     nltk.download('wordnet')
     nltk.download('punkt')
     nltk.download('averaged_perceptron_tagger')
+    nltk.download('stopwords')
     def __init__(
             self,
             file_name: str,
@@ -27,6 +28,7 @@ class DataProcesser(object):
             to_filter_one_char_words: bool = True,
             to_lemmatize: bool = True,
             to_subword_tokenize: bool = True,
+            to_remove_stopwords: bool = True, 
             lemmatizer: Any = WordNetLemmatizer,
             subword_tokenizer_trainer: Any = spm.SentencePieceTrainer,
             subword_tokenizer: Any = spm.SentencePieceProcessor,
@@ -35,7 +37,6 @@ class DataProcesser(object):
             tokenizer_model_type: str ="bpe",
             tokenizer_model_prefix: str = "subword_tokenizer"
         ) -> None:
-
         self.file_name = file_name
         self.sep = sep
         self.header = header
@@ -45,6 +46,8 @@ class DataProcesser(object):
         self.to_filter_one_char_words = to_filter_one_char_words
         self.to_lemmatize = to_lemmatize
         self.to_subword_tokenize = to_subword_tokenize
+        self.to_remove_stopwords = to_remove_stopwords
+        self.stopwords = stopwords.words('english')
         self.corpus_dump_file = corpus_dump_file
         self.lemmatizer = lemmatizer()
         self.subword_tokenizer_trainer = subword_tokenizer_trainer
@@ -64,15 +67,13 @@ class DataProcesser(object):
             header = self.header
         )
         self.data_frame = self.data_frame.rename(columns = self.rename_map)
-
+        self.aspect_categories = self.data_frame["aspect_category"].unique()
+        self.aspect_categories_map = {category: idx for idx, category in enumerate(self.aspect_categories)}
         self.__write_corpus_file()
-
         self.__train_subword_tokenizer()
         self.subword_tokenizer = subword_tokenizer()
-        
-        self.subword_tokenizer.load(".\subword_tokenizer_trainer.model")
+        self.subword_tokenizer.load("./subword_tokenizer.model")
 
-        
     @staticmethod
     def __lowercase(
             sentence: str
@@ -127,6 +128,12 @@ class DataProcesser(object):
         pos_tags = nltk.pos_tag(tokenized_sentence)
         return pos_tags
 
+    def __filter_stopwords(
+            self, 
+            tokenized_sentence: list[str]
+        ) -> list[str]:
+        return [word for word in tokenized_sentence if word not in self.stopwords]
+        
     def __lemmatize_word(
             self, 
             word: str, 
@@ -162,20 +169,16 @@ class DataProcesser(object):
 
     def __subword_tokenize_sentence(
             self, 
-            sentence: str
+            sentence: str,
+            as_ids: bool = True
         ) -> list[str]:
-        tokenized_sentence = self.subword_tokenizer.encode_as_pieces(sentence)
+        tokenized_sentence = self.subword_tokenizer.encode_as_ids(sentence) if as_ids \
+            else self.subword_tokenizer.encode_as_pieces(sentence)
         return tokenized_sentence
 
-    def preprocess_text(
+    def __preprocess_text(
             self,
         ) -> None:
-        """
-        
-        1) Lowercase the sentence
-        2) Replace non-alphabetic characters from sentence
-        
-        """        
         if self.to_lowercase:
             self.data_frame["sentence"] = self.data_frame["sentence"].\
                 map(self.__lowercase)
@@ -188,6 +191,9 @@ class DataProcesser(object):
         if self.to_filter_one_char_words:
             self.data_frame["sentence"] = self.data_frame["sentence"].\
                 map(self.__filter_one_char_words)
+        if self.to_remove_stopwords:
+            self.data_frame["sentence"] = self.data_frame["sentence"].\
+                map(self.__filter_stopwords)
         if self.to_lemmatize:
             self.data_frame["sentence"] = self.data_frame["sentence"].\
                 map(self.__lemmatize)
@@ -197,4 +203,20 @@ class DataProcesser(object):
                 map(self.__subword_tokenize_sentence)
         if  self.to_subword_tokenize and self.tokenizer_model_type == "word":
             self.data_frame["sentence"] = self.data_frame["sentence"].\
-                map(self.__subword_tokenize_sentence)    
+                map(self.__subword_tokenize_sentence)
+
+    def __encode_aspect_category(
+            self
+        ) -> None:
+        self.data_frame["aspect_category"] = self.data_frame["aspect_category"].\
+            map(self.aspect_categories_map)
+    
+    def run_preprocessing(
+            self,
+            preprocess_text: bool = True, 
+            encode_aspect_categories: bool = True
+        ) -> None:
+        if preprocess_text:
+            self.__preprocess_text()
+        if encode_aspect_categories:
+            self.__encode_aspect_category()

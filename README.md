@@ -4,11 +4,11 @@ This repository contains the work of our group for the NLP Course Assignment.
 
 A detailed description of the working pipeline can be found below.
 
-#### Description of the Task (**Aspect Category Based Sentiment Analysis**)
+### Description of the Task (**Aspect Category Based Sentiment Analysis**)
 
 As described in the ```nlp_assignment_doc.pdf``` file, the goal of this assignment is to build a Sentiment Analysis model in order to predict the valence of each sentence with respect to some referene Aspect Category.
 
-#### Data Preprocessing
+### Data Preprocessing
 
 Data preprocessing is a crucial step for any NLP pipeline. The quality of the preprocessing has a very important influence in the performance of the model in the downstream tasks.
 
@@ -21,13 +21,24 @@ A detailed description of the object and its arguments and methods can be found 
 The ```DataProcesser``` object is designed to perform several 
 preprocessing steps, with maximum flexibility in the choice of how to do it. In particular, it offers the possibility to:
 
+
 * lowercase input texts
-* remove non alphabetic characters from the input text
+* remove non alphabetic characters from the input text (TODO: Remove Stopwords)
 * perform word-level tokenization of the input text
 * filter out one character words from the input text
 * perform lemmatization (by using the ```nltk`` implementation of ```WordNetLemmatizer```)
 * perform sub-word tokenization (by using arbitrary type of sub-word tokenizers provided in the ```sentencepiece```)
 
+
+### Feature Extraction
+
+TODO (word2Vec / TfIdfVectorization / etc.)
+
+In order to perform word vectorization, we use a pre-trained BERT model 
+
+### Models
+
+TODO (Trasnformers / BERT / LinearModels / etc.)
 
 
 ##### Authors
