@@ -6,6 +6,7 @@ __pycache__/
 # Trained Subword Tokenizer files
 *.model
 *.vocab
+*.txt
 
 
 # C extensions
