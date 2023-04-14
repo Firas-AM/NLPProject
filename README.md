@@ -8,9 +8,9 @@ A detailed description of the working pipeline can be found below.
 
 As described in the ```nlp_assignment_doc.pdf``` file, the goal of this assignment is to build a Sentiment Analysis model in order to predict the valence of each sentence with respect to some referene Aspect Category.
 
-In order to perform this fine-grained Sentuiment Analysis Task, we decide to incorporate the information abou the aspect categories in the following way:
+In order to perform this fine-grained Sentuiment Analysis Task, we decided to incorporate the information about the aspect categories in the following way:
 
-Given a character offset (i.e.: ```dataset["character_offset"]```), indicating the beginning and the end of the target word for a given aspect category (i.e.: ```dataset["aspect_category"]```), we inserted the string representing the aspect category between the target word.
+Given a character offset (i.e.: ```dataset["character_offset"]```), indicating the beginning and the end of the target word for a given aspect category (i.e.: ```dataset["aspect_category"]```), we inserted the string representing the aspect category around the target word.
 
 For example, given:
 * the sentence: "short and sweet – seating is great:it's romantic,cozy and private." 

@@ -29,11 +29,12 @@ class DataProcesser(object):
             to_lemmatize: bool = True,
             to_subword_tokenize: bool = True,
             to_remove_stopwords: bool = True,
-            polarity_encoder: Any = LabelEncoder,  
+            encode_as_ids: bool = True,
+            polarity_encoder: Any = LabelEncoder,
             lemmatizer: Any = WordNetLemmatizer,
             subword_tokenizer_trainer: Any = spm.SentencePieceTrainer,
             subword_tokenizer: Any = spm.SentencePieceProcessor,
-            target_vocabulary_size: int = 4000, 
+            target_vocabulary_size: int = 5000, 
             corpus_dump_file: str = "../data/corpus.txt",
             tokenizer_model_type: str ="bpe",
             tokenizer_model_prefix: str = "subword_tokenizer"
@@ -48,6 +49,7 @@ class DataProcesser(object):
         self.to_lemmatize = to_lemmatize
         self.to_subword_tokenize = to_subword_tokenize
         self.to_remove_stopwords = to_remove_stopwords
+        self.encode_as_ids = encode_as_ids
         self.stopwords = stopwords.words('english')
         self.polarity_encoder = polarity_encoder()
         self.corpus_dump_file = corpus_dump_file
@@ -75,7 +77,9 @@ class DataProcesser(object):
         self.__encode_polarity_categories()
         self.aspect_categories = self.data_frame["aspect_category"].\
             unique()   
-        self.aspect_categories_map = {category: idx for idx, category in enumerate(self.aspect_categories)} 
+        self.aspect_categories_map = {category: f"C{idx}" for idx, category in enumerate(self.aspect_categories)} 
+        self.data_frame["aspect_category"] = self.data_frame["aspect_category"].\
+            map(self.aspect_categories_map)
         self.data_frame["character_offset_start"] = self.data_frame["character_offset"].\
             map(self.__find_offset_start)
         self.data_frame["character_offset_end"] = self.data_frame["character_offset"].\
@@ -227,10 +231,9 @@ class DataProcesser(object):
 
     def __subword_tokenize_sentence(
             self, 
-            sentence: str,
-            as_ids: bool = True
+            sentence: str
         ) -> list[str]:
-        tokenized_sentence = self.subword_tokenizer.encode_as_ids(sentence) if as_ids \
+        tokenized_sentence = self.subword_tokenizer.encode_as_ids(sentence) if self.encode_as_ids \
             else self.subword_tokenizer.encode_as_pieces(sentence)
         return tokenized_sentence
 
@@ -238,43 +241,34 @@ class DataProcesser(object):
             self,
         ) -> None:
         if self.to_lowercase:
-            self.data_frame["sentence"] = self.data_frame["sentence"].\
+            self.data_frame["concatenated_sentence"] = self.data_frame["concatenated_sentence"].\
                 map(self.__lowercase)
         if self.to_remove_non_alphabetic_characters:
-            self.data_frame["sentence"] = self.data_frame["sentence"].\
+            self.data_frame["concatenated_sentence"] = self.data_frame["concatenated_sentence"].\
                 map(self.__remove_non_alphabetic_characters)
         if self.to_split_sentence:
-            self.data_frame["sentence"] = self.data_frame["sentence"].\
+            self.data_frame["concatenated_sentence"] = self.data_frame["concatenated_sentence"].\
                 map(self.__tokenize_sentence)
         if self.to_filter_one_char_words:
-            self.data_frame["sentence"] = self.data_frame["sentence"].\
+            self.data_frame["concatenated_sentence"] = self.data_frame["concatenated_sentence"].\
                 map(self.__filter_one_char_words)
         if self.to_remove_stopwords:
-            self.data_frame["sentence"] = self.data_frame["sentence"].\
+            self.data_frame["concatenated_sentence"] = self.data_frame["concatenated_sentence"].\
                 map(self.__filter_stopwords)
         if self.to_lemmatize:
-            self.data_frame["sentence"] = self.data_frame["sentence"].\
+            self.data_frame["concatenated_sentence"] = self.data_frame["concatenated_sentence"].\
                 map(self.__lemmatize)
         if self.to_subword_tokenize and self.tokenizer_model_type != "word":
-            self.data_frame["sentence"] = self.data_frame["sentence"].\
+            self.data_frame["concatenated_sentence"] = self.data_frame["concatenated_sentence"].\
                 map(self.__detokenize_sentence).\
                 map(self.__subword_tokenize_sentence)
-        if  self.to_subword_tokenize and self.tokenizer_model_type == "word":
-            self.data_frame["sentence"] = self.data_frame["sentence"].\
+        if self.to_subword_tokenize and self.tokenizer_model_type == "word":
+            self.data_frame["concatenated_sentence"] = self.data_frame["concatenated_sentence"].\
                 map(self.__subword_tokenize_sentence)
-
-    def __encode_aspect_category(
-            self
-        ) -> None:
-        self.data_frame["aspect_category"] = self.data_frame["aspect_category"].\
-            map(self.aspect_categories_map)
     
-    def run_preprocessing(
+    def fit(
             self,
             preprocess_text: bool = True, 
             encode_aspect_categories: bool = True
         ) -> None:
-        if preprocess_text:
-            self.__preprocess_text()
-        if encode_aspect_categories:
-            self.__encode_aspect_category()
+        self.__preprocess_text()
