@@ -10,7 +10,7 @@ from typing import Any
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet, stopwords
 from nltk.tokenize.treebank import TreebankWordDetokenizer
-
+from sklearn.preprocessing import LabelEncoder
 
 class DataProcesser(object):
     nltk.download('wordnet')
@@ -28,7 +28,8 @@ class DataProcesser(object):
             to_filter_one_char_words: bool = True,
             to_lemmatize: bool = True,
             to_subword_tokenize: bool = True,
-            to_remove_stopwords: bool = True, 
+            to_remove_stopwords: bool = True,
+            polarity_encoder: Any = LabelEncoder,  
             lemmatizer: Any = WordNetLemmatizer,
             subword_tokenizer_trainer: Any = spm.SentencePieceTrainer,
             subword_tokenizer: Any = spm.SentencePieceProcessor,
@@ -48,6 +49,7 @@ class DataProcesser(object):
         self.to_subword_tokenize = to_subword_tokenize
         self.to_remove_stopwords = to_remove_stopwords
         self.stopwords = stopwords.words('english')
+        self.polarity_encoder = polarity_encoder()
         self.corpus_dump_file = corpus_dump_file
         self.lemmatizer = lemmatizer()
         self.subword_tokenizer_trainer = subword_tokenizer_trainer
@@ -66,14 +68,63 @@ class DataProcesser(object):
             sep = self.sep,
             header = self.header
         )
-        self.data_frame = self.data_frame.rename(columns = self.rename_map)
-        self.aspect_categories = self.data_frame["aspect_category"].unique()
-        self.aspect_categories_map = {category: idx for idx, category in enumerate(self.aspect_categories)}
+        self.data_frame = self.data_frame.\
+            rename(columns = self.rename_map)
         self.__write_corpus_file()
         self.__train_subword_tokenizer()
+        self.__encode_polarity_categories()
+        self.aspect_categories = self.data_frame["aspect_category"].\
+            unique()   
+        self.aspect_categories_map = {category: idx for idx, category in enumerate(self.aspect_categories)} 
+        self.data_frame["character_offset_start"] = self.data_frame["character_offset"].\
+            map(self.__find_offset_start)
+        self.data_frame["character_offset_end"] = self.data_frame["character_offset"].\
+            map(self.__find_offset_end)
+        self.data_frame["concatenated_sentence"] = self.data_frame.\
+            apply(self.__insert_aspect_tokens, axis = 1)
+        self.data_frame = self.data_frame.drop(
+            [
+                "character_offset",
+                "character_offset_start", 
+                "character_offset_end",
+                "aspect_category",
+                "sentence",
+                "target_term"
+            ], 
+            axis = 1
+        ) 
         self.subword_tokenizer = subword_tokenizer()
         self.subword_tokenizer.load("./subword_tokenizer.model")
 
+    @staticmethod
+    def __find_offset_start(
+            offset_string: str,
+        ) -> int:
+        start_offset = re.findall("(\d*):\d*", offset_string)[0]
+        return int(start_offset)
+
+    @staticmethod
+    def __find_offset_end(
+            offset_string: str,
+        ) -> int:
+        end_offset = re.findall("\d*:(\d*)", offset_string)[0]
+        return int(end_offset)
+
+    @staticmethod
+    def __insert_aspect_tokens(
+            data_frame_row: pd.core.series.Series,
+            aspect_chategory_field: str = "aspect_category", 
+            sentence_field: str = "sentence",
+            character_offset_start_field: str  = "character_offset_start",
+            character_offset_end_field: str  = "character_offset_end"
+        ) -> str:
+        sentence = data_frame_row[sentence_field]
+        offset_start = data_frame_row[character_offset_start_field]
+        offset_end = data_frame_row[character_offset_end_field]
+        category = data_frame_row[aspect_chategory_field]
+        concatenated_string = f"{sentence[:offset_start]} {category} {sentence[offset_start: offset_end]} {category} {sentence[offset_end: ]}"
+        return concatenated_string
+    
     @staticmethod
     def __lowercase(
             sentence: str
@@ -127,6 +178,13 @@ class DataProcesser(object):
         ) -> list[tuple[str]]:
         pos_tags = nltk.pos_tag(tokenized_sentence)
         return pos_tags
+
+    def __encode_polarity_categories(
+            self
+        ) -> None:
+        polarities = self.data_frame["polarity"].values
+        encoded_polarities = self.polarity_encoder.fit_transform(polarities)
+        self.data_frame["polarity"] = encoded_polarities
 
     def __filter_stopwords(
             self, 
