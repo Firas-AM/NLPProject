@@ -79,7 +79,7 @@ class VectorizedDataset(Dataset):
     def __len__(
             self
         ) -> None:
-        return len(self.X)
+        return len(self.preprocesser.data_frame)
 
     def __getitem__(
             self, 
