@@ -22,7 +22,7 @@ class VectorizedDataset(Dataset):
             sentence_field: str = "concatenated_sentence",
             polarity_field: str = "polarity",
             encoder: object = BertModel
-        ) -> None:
+        ) -> NoneType:
         self.file_name = file_name
         self.preprocesser = preprocesser(file_name)
         self.bert_tokenization = bert_tokenization
@@ -72,13 +72,16 @@ class VectorizedDataset(Dataset):
                 target_type = target_type
             )
         else:
-            encoder_input = self.bert_tokenizer(sentence, return_tensors="pt")
+            encoder_input = self.bert_tokenizer(
+                sentence, 
+                return_tensors="pt"
+            )
         encoded_sentence = self.encoder(**encoder_input)
         return encoded_sentence.last_hidden_state
 
     def __len__(
             self
-        ) -> None:
+        ) -> NoneType:
         return len(self.preprocesser.data_frame)
 
     def __getitem__(
@@ -87,8 +90,14 @@ class VectorizedDataset(Dataset):
         ) -> tuple[torch.Tensor]:
         sentence = self.tokenized_sentences.iloc[idx]
         if not self.bert_tokenization:
-            sentence = self.__to_torch_tensor(sentence)
+            sentence = self.__to_torch_tensor(
+                sentence
+            )
         polarity = self.polarities.iloc[idx]
-        sentence = self.__encode(sentence)
-        polarity_tensor = self.__to_torch_tensor(polarity)
+        sentence = self.__encode(
+            sentence
+        )
+        polarity_tensor = self.__to_torch_tensor(
+            polarity
+        )
         return sentence, polarity_tensor

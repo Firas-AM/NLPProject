@@ -1,4 +1,5 @@
 from typing import List
+from .DatasetVectorization.DatasetVectorization import *
 
 import torch
 
@@ -8,11 +9,19 @@ class Classifier:
     The Classifier: complete the definition of this class template by providing a constructor (i.e. the
     __init__() function) and the 2 methods train() and predict() below. Please donot change
      """
+    def __init__(
 
+      ) -> NoneType:
+      ...
 
 
     ############################################# comp
-    def train(self, train_filename: str, dev_filename: str, device: torch.device):
+    def train(
+          self, 
+          train_filename: str, 
+          dev_filename: str, 
+          device: torch.device
+        ) -> NoneType:
         """
         Trains the classifier model on the training set stored in file trainfile
         PLEASE:
@@ -21,6 +30,12 @@ class Classifier:
           - DO NOT USE THE DEV DATA AS TRAINING EXAMPLES, YOU CAN USE THEM ONLY FOR THE OPTIMIZATION
          OF MODEL HYPERPARAMETERS
         """
+        train_dataset = VectorizedDataset(
+          train_filename
+        )
+        val_dataset = VectorizedDataset(
+          dev_filename
+        )
 
 
     def predict(self, data_filename: str, device: torch.device) -> List[str]:

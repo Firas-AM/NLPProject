@@ -37,8 +37,9 @@ class DataProcesser(object):
             target_vocabulary_size: int = 5000, 
             corpus_dump_file: str = "../data/corpus.txt",
             tokenizer_model_type: str ="bpe",
-            tokenizer_model_prefix: str = "subword_tokenizer"
-        ) -> None:
+            tokenizer_model_prefix: str = "subword_tokenizer",
+            train: bool = True 
+        ) -> NoneType:
         self.file_name = file_name
         self.sep = sep
         self.header = header
@@ -58,6 +59,7 @@ class DataProcesser(object):
         self.target_vocabulary_size = target_vocabulary_size
         self.tokenizer_model_type = tokenizer_model_type
         self.tokenizer_model_prefix = tokenizer_model_prefix
+        self.train = train
         self.rename_map = {
             0: "polarity",
             1: "aspect_category",
@@ -164,7 +166,7 @@ class DataProcesser(object):
     @staticmethod
     def __get_wordnet_pos(
             treebank_tag: str
-        ) -> str | None:
+        ) -> str | NoneType:
         if treebank_tag.startswith('J'):
             return wordnet.ADJ
         elif treebank_tag.startswith('V'):
@@ -185,7 +187,7 @@ class DataProcesser(object):
 
     def __encode_polarity_categories(
             self
-        ) -> None:
+        ) -> NoneType:
         polarities = self.data_frame["polarity"].values
         encoded_polarities = self.polarity_encoder.fit_transform(polarities)
         self.data_frame["polarity"] = encoded_polarities
@@ -199,7 +201,7 @@ class DataProcesser(object):
     def __lemmatize_word(
             self, 
             word: str, 
-            pos: str | None
+            pos: str | NoneType
         ) -> str:
         pos = self.__get_wordnet_pos(pos)
         return self.lemmatizer.lemmatize(word, pos) if pos \
@@ -217,7 +219,7 @@ class DataProcesser(object):
 
     def __write_corpus_file(
             self,
-        ) -> None:
+        ) -> NoneType:
         with open(self.corpus_dump_file, "w+") as dump_file_handle:
             for sentence in self.data_frame["sentence"]:
                 dump_file_handle.write(sentence)
@@ -225,7 +227,7 @@ class DataProcesser(object):
 
     def __train_subword_tokenizer(
             self, 
-        ) -> None:
+        ) -> NoneType:
         train_arg_string = f"--input={self.corpus_dump_file} --vocab_size={self.target_vocabulary_size} --model_prefix={self.tokenizer_model_prefix} --model_type={self.tokenizer_model_type}"
         self.subword_tokenizer_trainer.train(train_arg_string)
 
@@ -239,7 +241,7 @@ class DataProcesser(object):
 
     def __preprocess_text(
             self,
-        ) -> None:
+        ) -> NoneType:
         if self.to_lowercase:
             self.data_frame["concatenated_sentence"] = self.data_frame["concatenated_sentence"].\
                 map(self.__lowercase)
@@ -270,5 +272,5 @@ class DataProcesser(object):
             self,
             preprocess_text: bool = True, 
             encode_aspect_categories: bool = True
-        ) -> None:
+        ) -> NoneType:
         self.__preprocess_text()
