@@ -2,12 +2,6 @@ import sys
 from ..Preprocessing.Preprocessing import *
 
 
-if sys.version_info >= (3, 10):
-    from types import NoneType
-else:
-    from builtins import NoneType
-
-
 from transformers import BertModel, AutoTokenizer, BertTokenizer
 from torch.utils.data import Dataset
 

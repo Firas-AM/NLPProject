@@ -3,10 +3,16 @@ from __future__ import annotations
 import pandas as pd
 import sentencepiece as spm
 
+import sys
 import nltk
 import re
 
-from types import NoneType
+
+if sys.version_info >= (3, 10):
+    from types import NoneType
+else:
+    from builtins import NoneType
+
 from typing import Any
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet, stopwords
