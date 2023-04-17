@@ -1,6 +1,13 @@
+import sys
 from ..Preprocessing.Preprocessing import *
 
-from types import NoneType
+
+if sys.version_info >= (3, 10):
+    from types import NoneType
+else:
+    from builtins import NoneType
+
+
 from transformers import BertModel, AutoTokenizer, BertTokenizer
 from torch.utils.data import Dataset
 
@@ -98,7 +105,7 @@ class VectorizedDataset(Dataset):
 
     def __len__(
             self
-        ) -> NoneType:
+        ) -> int:
         return len(self.preprocesser.data_frame)
 
     def __getitem__(
