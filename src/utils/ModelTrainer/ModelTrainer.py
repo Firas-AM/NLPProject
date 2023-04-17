@@ -74,7 +74,7 @@ class ModelTrainer(object):
         ) -> NoneType:
         num_training_steps = len(train_dataset) * self.epochs
         self.model = self.model.from_pretrained(self.pretrained_encoder, num_labels = self.num_labels)
-        self.model.to(self.device)
+        self.model = self.model.to(self.device)
         self.class_weights = torch.Tensor(self.class_weights).to(self.device) if self.class_weights is not None\
             else None
         self.loss = self.loss(weight = self.class_weights) if self.loss\
