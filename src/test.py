@@ -21,8 +21,8 @@ trainer = ModelTrainer(
     batch_encode = True
 )
 
-train_path = "..\data\traindata.csv"
-eval_path = "..\data\devdata.csv"
+train_path = "./NLPProject/data/traindata.csv" ## change this back when running locally
+eval_path = "./NLPProject/data/devdata.csv" ## change this back when running locally
 
 
 trainer.train(

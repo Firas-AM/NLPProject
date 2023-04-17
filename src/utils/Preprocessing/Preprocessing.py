@@ -42,7 +42,7 @@ class DataProcesser(object):
             subword_tokenizer_trainer: object = spm.SentencePieceTrainer,
             subword_tokenizer: object = spm.SentencePieceProcessor,
             target_vocabulary_size: int = 5000, 
-            corpus_dump_file: str = "../data/corpus.txt",
+            corpus_dump_file: str = "./NLPProject/data/corpus.txt",
             tokenizer_model_type: str ="bpe",
             tokenizer_model_prefix: str = "subword_tokenizer",
             train: bool = True 

@@ -103,9 +103,9 @@ class ModelTrainer(object):
                 inputs_ids, labels = batch
             else: 
                 input_ids, attention_mask, labels = batch
-                attention_mask = attention_mask.to(device)
-            input_ids = input_ids.to(device)
-            labels = labels.to(device)
+                attention_mask = attention_mask.to(self.device)
+            input_ids = input_ids.to(self.device)
+            labels = labels.to(self.device)
             self.optimizer.zero_grad()
             outputs = self.model(input_ids, labels = labels) if self.input_already_vectorized\
                 else self.model(input_ids, attention_mask=attention_mask, labels=labels)
