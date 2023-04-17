@@ -1,6 +1,7 @@
 from ..Preprocessing.Preprocessing import *
 
-from transformers import BertModel, AutoTokenizer
+from types import NoneType
+from transformers import BertModel, AutoTokenizer, BertTokenizer
 from torch.utils.data import Dataset
 
 import torch
@@ -17,11 +18,12 @@ class VectorizedDataset(Dataset):
             file_name: str,
             preprocesser: object = DataProcesser,
             bert_tokenization: bool = False,
+            batch_encode: bool = False,
             bert_tokenizer: object = AutoTokenizer, 
             pretrained_encoder: str = "bert-base-uncased",
             sentence_field: str = "concatenated_sentence",
             polarity_field: str = "polarity",
-            encoder: object = BertModel
+            encoder: object = BertModel,
         ) -> NoneType:
         self.file_name = file_name
         self.preprocesser = preprocesser(file_name)
@@ -30,6 +32,7 @@ class VectorizedDataset(Dataset):
         self.sentence_field = sentence_field
         self.polarity_field = polarity_field
         self.encoder = encoder.from_pretrained(self.pretrained_encoder)
+        self.batch_encode = batch_encode
         if not self.bert_tokenization:
             self.preprocesser.fit()
         else: 
@@ -64,17 +67,31 @@ class VectorizedDataset(Dataset):
     def __encode(
             self, 
             sentence: torch.Tensor | str, 
-            target_type: object = torch.int64
+            target_type: object = torch.int64,
+            max_length: int = 128,
+            padding_type: str = "max_length",
+            truncation: bool = True,
+            return_tensors: str = "pt"
         ) -> torch.Tensor:
         if not self.bert_tokenization:
             encoder_input = self.__create_encoder_input(
                 sentence, 
                 target_type = target_type
             )
-        else:
+        elif self.bert_tokenization and not self.batch_encode:
+            assert isinstance(self.bert_tokenizer, AutoTokenizer), "The given tokenizer is not of the right type, a AutoTokenizer is expected"
             encoder_input = self.bert_tokenizer(
                 sentence, 
-                return_tensors="pt"
+                return_tensors = return_tensors
+            )
+        elif self.bert_tokenization and self.batch_encode:
+            assert isinstance(self.bert_tokenizer, BertTokenizer), "The given tokenizer is not of the right type, a BertTokenizer is expected"
+            encoder_input = self.bert_tokenizer.batch_encode_plus(
+                sentence, 
+                max_length = max_length,
+                padding = padding_type,
+                truncation = truncation, 
+                return_tensors = return_tensors
             )
         encoded_sentence = self.encoder(**encoder_input)
         return encoded_sentence.last_hidden_state

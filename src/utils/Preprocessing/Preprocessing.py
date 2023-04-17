@@ -6,6 +6,7 @@ import sentencepiece as spm
 import nltk
 import re
 
+from types import NoneType
 from typing import Any
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet, stopwords

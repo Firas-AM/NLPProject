@@ -1,6 +1,10 @@
 import torch
 import gc
 
+import numpy as np
+
+from tqdm import tqdm
+from types import NoneType
 from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score,classification_report
 
@@ -16,13 +20,15 @@ class ModelTrainer(object):
             scheduler: torch.nn.Module,
             class_weights: np.ndarray | NoneType,
             initial_learning_rate: float,
+            pretrained_encoder: str = "bert-base-uncased",
             loss: torch.nn.Module | NoneType = None,
             training_batch_size: int = 32, 
             val_batch_size: int = 32,
             num_labels: int = 3,
             input_already_vectorized: bool = True,
             epochs: int = 100,
-            patience: int = 5
+            patience: int = 5,
+            **kwargs # for vectorized dataset
         ) -> NoneType:
         self.model = model
         self.device = device
@@ -31,7 +37,8 @@ class ModelTrainer(object):
         self.scheduler = scheduler
         self.class_weights = class_weights
         self.initial_learning_rate = initial_learning_rate
-        self.trainig_bacth_size = training_batch_size
+        self.pretrained_encoder = pretrained_encoder
+        self.training_batch_size = training_batch_size
         self.val_batch_size = val_batch_size
         self.num_labels = num_labels
         self.input_already_vectorized = input_already_vectorized
@@ -48,6 +55,7 @@ class ModelTrainer(object):
         self.val_precisions = []
         self.val_recalls = []
         self.val_f1s = []
+        self.kwargs = kwargs # for vectorized dataset
     
     def __track_validation_progress(
             self,
@@ -63,14 +71,17 @@ class ModelTrainer(object):
             self,
             train_dataset: Dataset, 
             val_dataset: Dataset,
-            **kwargs
+            n_warmup_steps: int = 0 
         ) -> NoneType:
-        self.class_weights = torch.Tensor(self.class_weights).to(self.device) if self.class_weights\
+        num_training_steps = len(train_dataset) * self.epochs
+        self.model = self.model.from_pretrained(self.pretrained_encoder, num_labels = self.num_labels)
+        self.model.to(self.device)
+        self.class_weights = torch.Tensor(self.class_weights).to(self.device) if self.class_weights is not None\
             else None
-        self.loss = self.loss(weight = self.class_weights) if self.class_weights\
+        self.loss = self.loss(weight = self.class_weights) if self.loss\
             else None
         self.optimizer = self.optimizer(self.model.parameters(), lr = self.initial_learning_rate)
-        self.scheduler = self.scheduler(self.optimizer, **kwargs)
+        self.scheduler = self.scheduler(self.optimizer, num_warmup_steps = n_warmup_steps, num_training_steps = num_training_steps)
         train_dataloader = DataLoader(
             train_dataset,
             batch_size = self.training_batch_size
@@ -88,7 +99,7 @@ class ModelTrainer(object):
         train_loss = 0
         self.model.train()
         train_preds = []; train_labels = []
-        for batch in train_dataloader:
+        for batch in tqdm(train_dataloader):
             if self.input_already_vectorized:
                 inputs_ids, labels = batch
             else: 
@@ -103,7 +114,8 @@ class ModelTrainer(object):
                 else outputs.loss
             loss.backward()
             self.optimizer.step()
-            self.scheduler.step()
+            if self.scheduler:
+                self.scheduler.step()
             train_loss += loss.item()
             train_preds += torch.argmax(logits, axis=1).tolist()
             train_labels += labels.tolist()
@@ -166,12 +178,10 @@ class ModelTrainer(object):
             self, 
             train_dataset: Dataset, 
             val_dataset: Dataset,
-            **kwargs
         ) -> NoneType:
-        train_dataloader, val_dataloader = self,__init_training(
+        train_dataloader, val_dataloader = self.__init_training(
             train_dataset, 
             val_dataset,
-            **kwargs
         )
         for epoch in range(self.epochs):
             train_logs, val_logs = self.__epoch(train_dataloader, val_dataloader)
@@ -193,8 +203,8 @@ class ModelTrainer(object):
     def train(
             self,
             train_path: str, 
-            eval_path: str
+            eval_path: str,
         ) -> NoneType:
-        train_dataset = VectorizedDataset(train_path)
-        eval_dataset = VectorizedDataset(eval_path)
+        train_dataset = VectorizedDataset(train_path, **self.kwargs)
+        eval_dataset = VectorizedDataset(eval_path, **self.kwargs)
         self.__train(train_dataset, eval_dataset)
