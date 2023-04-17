@@ -1,8 +1,4 @@
-from __future__ import annotations
-
-import sys
 from ..Preprocessing.Preprocessing import *
-
 
 from transformers import BertModel, AutoTokenizer, BertTokenizer
 from torch.utils.data import Dataset
@@ -48,7 +44,7 @@ class VectorizedDataset(Dataset):
 
     def __to_torch_tensor(
             self, 
-            values: list[float] | int,
+            values: Union[list[float], int],
             target_type: object = torch.int64
         ) -> torch.Tensor:
         return torch.Tensor([values]).to(target_type).to(self.device)
@@ -69,7 +65,7 @@ class VectorizedDataset(Dataset):
 
     def __encode(
             self, 
-            sentence: torch.Tensor | str, 
+            sentence: Union[torch.Tensor, str], 
             target_type: object = torch.int64,
             max_length: int = 128,
             padding_type: str = "max_length",

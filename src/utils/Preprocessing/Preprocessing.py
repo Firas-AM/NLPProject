@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pandas as pd
 import sentencepiece as spm
 
@@ -15,7 +13,7 @@ try:
 except ImportError:
     NoneType = type(None)
 
-from typing import Any
+from typing import Any, Union
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet, stopwords
 from nltk.tokenize.treebank import TreebankWordDetokenizer
@@ -39,10 +37,10 @@ class DataProcesser(object):
             to_subword_tokenize: bool = True,
             to_remove_stopwords: bool = True,
             encode_as_ids: bool = True,
-            polarity_encoder: Any = LabelEncoder,
-            lemmatizer: Any = WordNetLemmatizer,
-            subword_tokenizer_trainer: Any = spm.SentencePieceTrainer,
-            subword_tokenizer: Any = spm.SentencePieceProcessor,
+            polarity_encoder: object = LabelEncoder,
+            lemmatizer: object = WordNetLemmatizer,
+            subword_tokenizer_trainer: object = spm.SentencePieceTrainer,
+            subword_tokenizer: object = spm.SentencePieceProcessor,
             target_vocabulary_size: int = 5000, 
             corpus_dump_file: str = "../data/corpus.txt",
             tokenizer_model_type: str ="bpe",
