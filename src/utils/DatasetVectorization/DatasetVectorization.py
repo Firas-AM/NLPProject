@@ -26,12 +26,13 @@ class VectorizedDataset(Dataset):
         self.sentence_field = sentence_field
         self.polarity_field = polarity_field
         self.encoder = encoder.from_pretrained(self.pretrained_encoder)
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.encoder = self.encoder.to(self.device)
         self.batch_encode = batch_encode
         if not self.bert_tokenization:
             self.preprocesser.fit()
         else: 
             self.bert_tokenizer = bert_tokenizer.from_pretrained(self.pretrained_encoder)
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.tokenized_sentences = self.preprocesser.data_frame[self.sentence_field]
         self.polarities = self.preprocesser.data_frame[self.polarity_field]
 
