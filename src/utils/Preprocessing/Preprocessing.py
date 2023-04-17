@@ -173,7 +173,7 @@ class DataProcesser(object):
     @staticmethod
     def __get_wordnet_pos(
             treebank_tag: str
-        ) -> str | NoneType:
+        ) -> Union[str, NoneType]:
         if treebank_tag.startswith('J'):
             return wordnet.ADJ
         elif treebank_tag.startswith('V'):
@@ -208,7 +208,7 @@ class DataProcesser(object):
     def __lemmatize_word(
             self, 
             word: str, 
-            pos: str | NoneType
+            pos: Union[str, NoneType]
         ) -> str:
         pos = self.__get_wordnet_pos(pos)
         return self.lemmatizer.lemmatize(word, pos) if pos \
