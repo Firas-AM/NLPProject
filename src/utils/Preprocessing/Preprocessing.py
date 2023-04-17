@@ -7,11 +7,13 @@ import sys
 import nltk
 import re
 
-
-if sys.version_info >= (3, 10):
-    from types import NoneType
-else:
-    from builtins import NoneType
+try:
+    if sys.version_info >= (3, 10):
+        from types import NoneType
+    else:
+        from builtins import NoneType
+except ImportError:
+    NoneType = type(None)
 
 from typing import Any
 from nltk.stem import WordNetLemmatizer
