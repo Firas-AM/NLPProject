@@ -10,9 +10,11 @@ class Classifier:
     __init__() function) and the 2 methods train() and predict() below. Please donot change
      """
     def __init__(
-
+        self, 
+        model: object
       ) -> NoneType:
       ...
+      
 
 
     ############################################# comp
@@ -38,15 +40,15 @@ class Classifier:
         )
 
 
-    def predict(self, data_filename: str, device: torch.device) -> List[str]:
+    def predict(
+          self, 
+          data_filename: str, 
+          device: torch.device
+        ) -> List[str]:
         """Predicts class labels for the input instances in file 'datafile'
         Returns the list of predicted labels
         PLEASE:
           - DO NOT CHANGE THE SIGNATURE OF THIS METHOD
           - PUT THE MODEL and DATA on the specified device! Do not use another device
         """
-
-
-
-
-
+        
