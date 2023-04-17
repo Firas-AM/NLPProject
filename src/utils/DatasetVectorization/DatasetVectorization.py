@@ -5,11 +5,6 @@ from torch.utils.data import Dataset
 
 import torch
 
-try:
-    from optimum.bettertransformer import BetterTransformer
-except ModuleNotFoundError:
-    print("WARNING (ModuleError): no module named 'optimum'")
-
 
 class VectorizedDataset(Dataset):
     def __init__(
@@ -39,8 +34,6 @@ class VectorizedDataset(Dataset):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.tokenized_sentences = self.preprocesser.data_frame[self.sentence_field]
         self.polarities = self.preprocesser.data_frame[self.polarity_field]
-        if torch.cuda.is_available():
-            self.encoder = BetterTransformer.transorm(self.encoder, keep_original_model = True)
 
     def __to_torch_tensor(
             self, 
