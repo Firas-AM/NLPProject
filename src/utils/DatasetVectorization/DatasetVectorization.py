@@ -86,6 +86,7 @@ class VectorizedDataset(Dataset):
                 truncation = truncation, 
                 return_tensors = return_tensors
             )
+        encoder_input = {key: value.to(self.device) for key, value in encoder_input.items()}
         encoded_sentence = self.encoder(**encoder_input)
         return encoded_sentence.last_hidden_state
 
