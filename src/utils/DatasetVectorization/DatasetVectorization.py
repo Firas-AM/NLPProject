@@ -34,7 +34,6 @@ class VectorizedDataset(Dataset):
         self.return_tensors = return_tensors
         self.encoder = encoder.from_pretrained(self.pretrained_encoder)
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.batch_encode = batch_encode
         self.bert_tokenizer = bert_tokenizer.from_pretrained(self.pretrained_encoder)
         # tokenize sentences all at once using custom tokenization
         if not self.bert_tokenization:
