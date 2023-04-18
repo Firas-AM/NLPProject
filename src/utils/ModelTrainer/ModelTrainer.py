@@ -111,6 +111,7 @@ class ModelTrainer(object):
                 else self.model(input_ids, attention_mask=attention_mask, labels=labels)
             loss = self.loss(outputs, labels) if self.loss\
                 else outputs.loss
+            logits = outputs.logits
             loss.backward()
             self.optimizer.step()
             if self.scheduler:
@@ -150,6 +151,7 @@ class ModelTrainer(object):
                     else self.model(input_ids, attention_mask=attention_mask, labels=labels)
                 loss = self.loss(outputs, labels) if self.loss\
                     else outputs.loss
+                logits = outputs.logits
                 eval_loss += loss.item() * input_ids.size(0)
                 val_preds += torch.argmax(logits, axis=1).tolist()
                 val_labels += labels.tolist()
