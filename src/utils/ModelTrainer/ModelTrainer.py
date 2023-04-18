@@ -187,7 +187,7 @@ class ModelTrainer(object):
         for epoch in range(self.epochs):
             train_logs, val_logs = self.__epoch(train_dataloader, val_dataloader)
             train_loss, train_accuracy, train_precision, train_recall, train_f1 = train_logs
-            eval_loss, val_accuracy, val_precision, val_recall, val_f1 = val_logs
+            val_loss, val_accuracy, val_precision, val_recall, val_f1 = val_logs
 
             print(f'Epoch {epoch+1} - Val Loss: {val_loss:.4f} - Val Accuracy: {val_accuracy:.4f} - Val Precision: {val_precision:.4f} - Val Recall: {val_recall:.4f} - Val F1: {val_f1:4f}')
 
