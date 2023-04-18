@@ -18,7 +18,8 @@ trainer = ModelTrainer(
     initial_learning_rate,
     bert_tokenization = True, 
     input_already_vectorized = False,
-    bert_tokenizer = BertTokenizer
+    bert_tokenizer = BertTokenizer,
+    pretrained_encoder = "bert-base-uncased",
 )
 train_path = "./NLPProject/data/traindata.csv" ## change this back when running locally
 eval_path = "./NLPProject/data/devdata.csv" ## change this back when running locally
