@@ -79,6 +79,7 @@ class VectorizedDataset(Dataset):
             )
         elif self.bert_tokenization and self.batch_encode:
             assert isinstance(self.bert_tokenizer, BertTokenizer), "The given tokenizer is not of the right type, a BertTokenizer is expected"
+            print("performing berto tokenization with batch encoding plus")
             encoded_input = self.bert_tokenizer.batch_encode_plus(
                 sentence, 
                 max_length = max_length,
