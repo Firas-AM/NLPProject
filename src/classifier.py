@@ -21,7 +21,7 @@ class Classifier:
     def train(
           self, 
           train_filename: str, 
-          dev_filename: str, 
+          dev_filename: str,
           device: torch.device
         ) -> NoneType:
         """
@@ -50,5 +50,4 @@ class Classifier:
         PLEASE:
           - DO NOT CHANGE THE SIGNATURE OF THIS METHOD
           - PUT THE MODEL and DATA on the specified device! Do not use another device
-        """
-        
+        """      

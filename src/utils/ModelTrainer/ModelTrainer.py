@@ -1,5 +1,6 @@
 import torch
 import gc
+import os
 
 import numpy as np
 
@@ -28,6 +29,8 @@ class ModelTrainer(object):
             input_already_vectorized: bool = True,
             epochs: int = 100,
             patience: int = 5,
+            save_path: str = "./NLPProject/src/TrainedModels",
+            model_name: str = "BaseModel", 
             **kwargs # for vectorized dataset
         ) -> NoneType:
         self.model = model
@@ -45,6 +48,8 @@ class ModelTrainer(object):
         self.epochs = epochs 
         self.patience = patience
         self.epochs_with_no_improvement = 0
+        self.save_path = save_path
+        self.model_name = model_name
         self.train_losses = [float("inf")] 
         self.train_accuracies = []
         self.train_precisions = []
@@ -60,10 +65,11 @@ class ModelTrainer(object):
     def __track_validation_progress(
             self,
         ) -> None:
-        previous_loss = self.val_losses[-2]
+        best = min(self.val_losses)
         current_loss = self.val_losses[-1]
-        if current_loss <= previous_loss:
+        if current_loss <= best:
             self.epochs_with_no_improvement = 0
+            torch.save(self.model, os.path.join(self.save_path, f"{self.model_name}-best.pt"))
         else: 
             self.epochs_with_no_improvement += 1
 

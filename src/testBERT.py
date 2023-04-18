@@ -6,7 +6,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = BertForSequenceClassification
 optimizer = AdamW
 scheduler = get_linear_schedule_with_warmup
-class_weights = np.array([3.,40.,1.])
+class_weights = None#np.array([3.,40.,1.])
 initial_learning_rate = 2e-5
 
 trainer = ModelTrainer(
@@ -20,6 +20,7 @@ trainer = ModelTrainer(
     input_already_vectorized = False,
     bert_tokenizer = BertTokenizer,
     pretrained_encoder = "bert-base-uncased",
+    model_name = "Bert"
 )
 train_path = "./NLPProject/data/traindata.csv" ## change this back when running locally
 eval_path = "./NLPProject/data/devdata.csv" ## change this back when running locally
