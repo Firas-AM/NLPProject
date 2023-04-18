@@ -8,8 +8,6 @@ tokenizer = RobertaTokenizer
 optimizer = AdamW
 scheduler = get_linear_schedule_with_warmup
 
-class_weights = torch.FloatTensor(class_weights).to(device)
-
 initial_learning_rate = 2e-5
 
 trainer = ModelTrainer(
