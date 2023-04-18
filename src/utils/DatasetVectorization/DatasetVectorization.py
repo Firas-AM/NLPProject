@@ -18,6 +18,10 @@ class VectorizedDataset(Dataset):
             sentence_field: str = "concatenated_sentence",
             polarity_field: str = "polarity",
             encoder: object = BertModel,
+            max_length: int = 128,
+            padding_type: str = "max_length",
+            truncation: bool = True,
+            return_tensors: str = "pt"
         ) -> NoneType:
         self.file_name = file_name
         self.preprocesser = preprocesser(file_name)
@@ -25,6 +29,10 @@ class VectorizedDataset(Dataset):
         self.pretrained_encoder = pretrained_encoder
         self.sentence_field = sentence_field
         self.polarity_field = polarity_field
+        self.max_length = max_length
+        self.padding_type = padding_type
+        self.truncation = truncation
+        self.return_tensors = return_tensors
         self.encoder = encoder.from_pretrained(self.pretrained_encoder)
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         #self.encoder = self.encoder.to(self.device)
@@ -39,10 +47,10 @@ class VectorizedDataset(Dataset):
             assert isinstance(self.bert_tokenizer, BertTokenizer), "The given tokenizer is not of the right type, a BertTokenizer is expected"
             encoded_input = self.bert_tokenizer(
                 self.tokenized_sentences.tolist(), 
-                max_length = max_length,
-                padding = padding_type,
-                truncation = truncation, 
-                return_tensors = return_tensors
+                max_length = self.max_length,
+                padding = self.padding_type,
+                truncation = self.truncation, 
+                return_tensors = self.return_tensors
             )
             self.tokenized_sentences = encoded_input['input_ids']
             self.attention_masks = encoded_input['attention_mask']
@@ -72,10 +80,6 @@ class VectorizedDataset(Dataset):
             self, 
             sentence: Union[torch.Tensor, str], 
             target_type: object = torch.int64,
-            max_length: int = 128,
-            padding_type: str = "max_length",
-            truncation: bool = True,
-            return_tensors: str = "pt"
         ) -> torch.Tensor:
         if not self.bert_tokenization:
             encoder_input = self.__create_encoder_input(
