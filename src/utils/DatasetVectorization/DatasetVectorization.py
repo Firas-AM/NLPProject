@@ -79,7 +79,6 @@ class VectorizedDataset(Dataset):
             )
         elif self.bert_tokenization and self.batch_encode:
             assert isinstance(self.bert_tokenizer, BertTokenizer), "The given tokenizer is not of the right type, a BertTokenizer is expected"
-            print("performing berto tokenization with batch encoding plus")
             encoded_input = self.bert_tokenizer.batch_encode_plus(
                 sentence, 
                 max_length = max_length,
@@ -87,6 +86,7 @@ class VectorizedDataset(Dataset):
                 truncation = truncation, 
                 return_tensors = return_tensors
             )
+            print(f"encoded input shape: {encoded_input['input_ids'].size()}, attention_mask_size {encoded_input['attention_mask'].size()}")
             return encoded_input['input_ids'], encoded_input['attention_mask']
         encoder_input = {key: value for key, value in encoder_input.items()}#encoder_input = {key: value.to(self.device) for key, value in encoder_input.items()}
         encoded_sentence = self.encoder(**encoder_input)
