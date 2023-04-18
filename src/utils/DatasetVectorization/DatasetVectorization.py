@@ -16,7 +16,6 @@ class VectorizedDataset(Dataset):
             pretrained_encoder: str = "bert-base-uncased",
             sentence_field: str = "concatenated_sentence",
             polarity_field: str = "polarity",
-            encoder: object = BertModel,
             max_length: int = 128,
             padding_type: str = "max_length",
             truncation: bool = True,
@@ -32,7 +31,6 @@ class VectorizedDataset(Dataset):
         self.padding_type = padding_type
         self.truncation = truncation
         self.return_tensors = return_tensors
-        self.encoder = encoder.from_pretrained(self.pretrained_encoder)
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.bert_tokenizer = bert_tokenizer.from_pretrained(self.pretrained_encoder)
         # tokenize sentences all at once using custom tokenization
@@ -87,8 +85,7 @@ class VectorizedDataset(Dataset):
             sentence, 
             target_type = target_type
         )
-        encoder_input = {key: value for key, value in encoder_input.items()}
-        encoded_sentence = self.encoder(**encoder_input)
+        encoded_sentence = self.bert_tokenizer(**encoder_input)
         return encoded_sentence.last_hidden_state
         
     def __len__(
