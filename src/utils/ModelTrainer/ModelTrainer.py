@@ -169,7 +169,7 @@ class ModelTrainer(object):
     def __epoch(
             self,
             train_dataloader: DataLoader,
-            val_dataloader: DataLoader
+            eval_dataloader: DataLoader
         ) -> tuple[float]:
         train_logs = self.__training_pass(train_dataloader)
         val_logs = self.__eval_pass(eval_dataloader)
