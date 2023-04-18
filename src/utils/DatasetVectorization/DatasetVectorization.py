@@ -79,13 +79,14 @@ class VectorizedDataset(Dataset):
             )
         elif self.bert_tokenization and self.batch_encode:
             assert isinstance(self.bert_tokenizer, BertTokenizer), "The given tokenizer is not of the right type, a BertTokenizer is expected"
-            encoder_input = self.bert_tokenizer.batch_encode_plus(
+            encoded_input = self.bert_tokenizer.batch_encode_plus(
                 sentence, 
                 max_length = max_length,
                 padding = padding_type,
                 truncation = truncation, 
                 return_tensors = return_tensors
             )
+            return encoded_input['input_ids'], encoded_input['attention_mask']
         encoder_input = {key: value for key, value in encoder_input.items()}#encoder_input = {key: value.to(self.device) for key, value in encoder_input.items()}
         encoded_sentence = self.encoder(**encoder_input)
         return encoded_sentence.last_hidden_state
