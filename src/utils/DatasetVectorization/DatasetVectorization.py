@@ -116,19 +116,22 @@ class VectorizedDataset(Dataset):
             self, 
             idx: int
         ) -> tuple[torch.Tensor]:
+        
+        polarity = self.polarities.iloc[idx]
+        polarity_tensor = self.__to_torch_tensor(
+            polarity
+        )
         if not self.bert_tokenization:
             sentence = self.tokenized_sentences.iloc[idx]
             sentence = self.__to_torch_tensor(
                 sentence
             )
-        polarity = self.polarities.iloc[idx]
         if not (self.bert_tokenization and self.batch_encode):
             sentence = self.__encode(
                 sentence
             )
         if self.bert_tokenization and self.batch_encode:
             sentence = self.tokenized_sentences[idx]
-        polarity_tensor = self.__to_torch_tensor(
-            polarity
-        )
+            attention_mask = self.attention_masks[idx]
+            return sentence, attention_mask, polarity_tensor
         return sentence, polarity_tensor
