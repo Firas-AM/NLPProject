@@ -18,8 +18,8 @@ class ModelTrainer(object):
             device: torch.device,
             optimizer: torch.nn.Module, 
             scheduler: torch.nn.Module,
-            class_weights: Union[np.ndarray, NoneType],
             initial_learning_rate: float,
+            class_weights: Union[np.ndarray, NoneType] = None,
             pretrained_encoder: str = "bert-base-uncased",
             loss: Union[torch.nn.Module, NoneType] = None,
             training_batch_size: int = 32, 
@@ -76,7 +76,7 @@ class ModelTrainer(object):
         num_training_steps = len(train_dataset) * self.epochs
         self.model = self.model.from_pretrained(self.pretrained_encoder, num_labels = self.num_labels)
         self.model = self.model.to(self.device)
-        self.class_weights = torch.Tensor(self.class_weights).to(self.device) if self.class_weights is not None\
+        self.class_weights = torch.Tensor(self.class_weights).to(self.device) if isinstance(self.class_weights, np.ndarray)\
             else None
         self.loss = self.loss(weight = self.class_weights) if self.loss\
             else None
@@ -206,7 +206,11 @@ class ModelTrainer(object):
             self,
             train_path: str, 
             eval_path: str,
+            class_weights_type: str = "balanced"
         ) -> NoneType:
         train_dataset = VectorizedDataset(train_path, pretrained_encoder = self.pretrained_encoder, **self.kwargs)
         eval_dataset = VectorizedDataset(eval_path, pretrained_encoder = self.pretrained_encoder, **self.kwargs)
+        if self.class_weights is None:
+            classes = np.unique(train_dataset.polarities)
+            self.class_weights = compute_class_weight(class_weights_type, classes = classes, y = train_dataset.polarities)
         self.__train(train_dataset, eval_dataset)

@@ -8,7 +8,6 @@ tokenizer = RobertaTokenizer
 optimizer = AdamW
 scheduler = get_linear_schedule_with_warmup
 
-class_weights = compute_class_weight('balanced', classes=np.unique(train_df['polarity']), y=train_df['polarity'])
 class_weights = torch.FloatTensor(class_weights).to(device)
 
 initial_learning_rate = 2e-5
@@ -18,8 +17,8 @@ trainer = ModelTrainer(
     device, 
     optimizer, 
     scheduler, 
-    class_weights, 
     initial_learning_rate,
+    class_weights = None,
     bert_tokenization = True, 
     input_already_vectorized = False,
     bert_tokenizer = tokenizer,
