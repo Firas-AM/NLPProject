@@ -35,6 +35,17 @@ class VectorizedDataset(Dataset):
             self.bert_tokenizer = bert_tokenizer.from_pretrained(self.pretrained_encoder)
         self.tokenized_sentences = self.preprocesser.data_frame[self.sentence_field]
         self.polarities = self.preprocesser.data_frame[self.polarity_field]
+        if self.bert_tokenization and self.batch_encode:
+            assert isinstance(self.bert_tokenizer, BertTokenizer), "The given tokenizer is not of the right type, a BertTokenizer is expected"
+            encoded_input = self.bert_tokenizer(
+                self.tokenized_sentences.tolist(), 
+                max_length = max_length,
+                padding = padding_type,
+                truncation = truncation, 
+                return_tensors = return_tensors
+            )
+            self.tokenized_sentences = encoded_input['input_ids']
+            self.attention_masks = encoded_input['attention_mask']
 
     def __to_torch_tensor(
             self, 
@@ -79,7 +90,7 @@ class VectorizedDataset(Dataset):
             )
         elif self.bert_tokenization and self.batch_encode:
             assert isinstance(self.bert_tokenizer, BertTokenizer), "The given tokenizer is not of the right type, a BertTokenizer is expected"
-            encoded_input = self.bert_tokenizer.batch_encode_plus(
+            encoded_input = self.bert_tokenizer(
                 sentence, 
                 max_length = max_length,
                 padding = padding_type,
@@ -101,15 +112,18 @@ class VectorizedDataset(Dataset):
             self, 
             idx: int
         ) -> tuple[torch.Tensor]:
-        sentence = self.tokenized_sentences.iloc[idx]
         if not self.bert_tokenization:
+            sentence = self.tokenized_sentences.iloc[idx]
             sentence = self.__to_torch_tensor(
                 sentence
             )
         polarity = self.polarities.iloc[idx]
-        sentence = self.__encode(
-            sentence
-        )
+        if not (self.bert_tokenization and self.batch_encode):
+            sentence = self.__encode(
+                sentence
+            )
+        if self.bert_tokenization and self.batch_encode:
+            sentence = self.tokenized_sentences[idx]
         polarity_tensor = self.__to_torch_tensor(
             polarity
         )
