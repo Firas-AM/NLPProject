@@ -27,7 +27,7 @@ class VectorizedDataset(Dataset):
         self.polarity_field = polarity_field
         self.encoder = encoder.from_pretrained(self.pretrained_encoder)
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.encoder = self.encoder.to(self.device)
+        #self.encoder = self.encoder.to(self.device)
         self.batch_encode = batch_encode
         if not self.bert_tokenization:
             self.preprocesser.fit()
@@ -86,7 +86,7 @@ class VectorizedDataset(Dataset):
                 truncation = truncation, 
                 return_tensors = return_tensors
             )
-        encoder_input = {key: value.to(self.device) for key, value in encoder_input.items()}
+        encoder_input = {key: value for key, value in encoder_input.items()}#encoder_input = {key: value.to(self.device) for key, value in encoder_input.items()}
         encoded_sentence = self.encoder(**encoder_input)
         return encoded_sentence.last_hidden_state
 

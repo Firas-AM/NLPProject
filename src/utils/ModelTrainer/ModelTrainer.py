@@ -118,7 +118,7 @@ class ModelTrainer(object):
             train_loss += loss.item()
             train_preds += torch.argmax(logits, axis=1).tolist()
             train_labels += labels.tolist()
-            del input_ids
+            del input_ids, attention_mask, labels
             gc.collect()
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
