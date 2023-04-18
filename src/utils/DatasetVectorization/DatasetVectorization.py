@@ -12,7 +12,6 @@ class VectorizedDataset(Dataset):
             file_name: str,
             preprocesser: object = DataProcesser,
             bert_tokenization: bool = False,
-            batch_encode: bool = False,
             bert_tokenizer: object = AutoTokenizer, 
             pretrained_encoder: str = "bert-base-uncased",
             sentence_field: str = "concatenated_sentence",
@@ -21,7 +20,7 @@ class VectorizedDataset(Dataset):
             max_length: int = 128,
             padding_type: str = "max_length",
             truncation: bool = True,
-            return_tensors: str = "pt"
+            return_tensors: str = "pt",
         ) -> NoneType:
         self.file_name = file_name
         self.preprocesser = preprocesser(file_name)
@@ -35,25 +34,29 @@ class VectorizedDataset(Dataset):
         self.return_tensors = return_tensors
         self.encoder = encoder.from_pretrained(self.pretrained_encoder)
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        #self.encoder = self.encoder.to(self.device)
         self.batch_encode = batch_encode
+        self.bert_tokenizer = bert_tokenizer.from_pretrained(self.pretrained_encoder)
+        # tokenize sentences all at once using custom tokenization
         if not self.bert_tokenization:
             self.preprocesser.fit()
-        else: 
-            self.bert_tokenizer = bert_tokenizer.from_pretrained(self.pretrained_encoder)
         self.tokenized_sentences = self.preprocesser.data_frame[self.sentence_field]
         self.polarities = self.preprocesser.data_frame[self.polarity_field]
-        if self.bert_tokenization and self.batch_encode:
-            assert isinstance(self.bert_tokenizer, BertTokenizer), "The given tokenizer is not of the right type, a BertTokenizer is expected"
-            encoded_input = self.bert_tokenizer(
-                self.tokenized_sentences.tolist(), 
-                max_length = self.max_length,
-                padding = self.padding_type,
-                truncation = self.truncation, 
-                return_tensors = self.return_tensors
-            )
-            self.tokenized_sentences = encoded_input['input_ids']
-            self.attention_masks = encoded_input['attention_mask']
+        # tokenize sentences all at once using hugging_face tokenizers
+        if self.bert_tokenization:
+            self.__pre_tokenize_sentences()
+
+    def __pre_tokenize_sentences(
+            self
+        )-> NoneType:
+        encoded_input = self.bert_tokenizer(
+            self.tokenized_sentences.tolist(), 
+            max_length = self.max_length,
+            padding = self.padding_type,
+            truncation = self.truncation, 
+            return_tensors = self.return_tensors
+        )
+        self.tokenized_sentences = encoded_input['input_ids']
+        self.attention_masks = encoded_input['attention_mask']
 
     def __to_torch_tensor(
             self, 
@@ -81,57 +84,52 @@ class VectorizedDataset(Dataset):
             sentence: Union[torch.Tensor, str], 
             target_type: object = torch.int64,
         ) -> torch.Tensor:
-        if not self.bert_tokenization:
-            encoder_input = self.__create_encoder_input(
-                sentence, 
-                target_type = target_type
-            )
-        elif self.bert_tokenization and not self.batch_encode:
-            assert isinstance(self.bert_tokenizer, AutoTokenizer), "The given tokenizer is not of the right type, a AutoTokenizer is expected"
-            encoder_input = self.bert_tokenizer(
-                sentence, 
-                return_tensors = return_tensors
-            )
-        elif self.bert_tokenization and self.batch_encode:
-            assert isinstance(self.bert_tokenizer, BertTokenizer), "The given tokenizer is not of the right type, a BertTokenizer is expected"
-            encoded_input = self.bert_tokenizer(
-                sentence, 
-                max_length = max_length,
-                padding = padding_type,
-                truncation = truncation, 
-                return_tensors = return_tensors
-            )
-            print(f"\n\nsentence {sentence}\nencoded input shape: {encoded_input['input_ids'].size()}, attention_mask_size {encoded_input['attention_mask'].size()}")
-            return encoded_input['input_ids'], encoded_input['attention_mask']
-        encoder_input = {key: value for key, value in encoder_input.items()}#encoder_input = {key: value.to(self.device) for key, value in encoder_input.items()}
+        encoder_input = self.__create_encoder_input(
+            sentence, 
+            target_type = target_type
+        )
+        encoder_input = {key: value for key, value in encoder_input.items()}
         encoded_sentence = self.encoder(**encoder_input)
         return encoded_sentence.last_hidden_state
-
+        
     def __len__(
             self
         ) -> int:
         return len(self.preprocesser.data_frame)
 
-    def __getitem__(
+    def __get_already_tokenized_item(
             self, 
             idx: int
         ) -> tuple[torch.Tensor]:
         
+        sentence = self.tokenized_sentences[idx]
+        attention_mask = self.attention_masks[idx]
+        return sentence, attention_mask
+
+    def __get_and_tokenize_sentence(
+            self, 
+            idx: int
+        ) -> torch.Tensor:
+        sentence = self.tokenized_sentences.iloc[idx]
+        sentence = self.__to_torch_tensor(
+            sentence
+        )   
+        sentence = self.__encode(
+            sentence
+        ) 
+        return sentence
+
+    def __getitem__(
+            self, 
+            idx: int
+        ) -> tuple[torch.Tensor]:
         polarity = self.polarities.iloc[idx]
         polarity_tensor = self.__to_torch_tensor(
             polarity
         )
         if not self.bert_tokenization:
-            sentence = self.tokenized_sentences.iloc[idx]
-            sentence = self.__to_torch_tensor(
-                sentence
-            )
-        if not (self.bert_tokenization and self.batch_encode):
-            sentence = self.__encode(
-                sentence
-            )
-        if self.bert_tokenization and self.batch_encode:
-            sentence = self.tokenized_sentences[idx]
-            attention_mask = self.attention_masks[idx]
+            sentence = self.__get_and_tokenize_sentence(idx)
+            return sentence, polarity_tensor    
+        else:   
+            sentence, attention_mask =  self.__get_already_tokenized_item(idx)
             return sentence, attention_mask, polarity_tensor
-        return sentence, polarity_tensor

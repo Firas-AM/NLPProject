@@ -1,10 +1,10 @@
 from utils.ModelTrainer.ModelTrainer import *
-from transformers import BertTokenizer, BertForSequenceClassification, AdamW
+from transformers import RobertaTokenizer, RobertaForSequenceClassification, AdamW,  get_linear_schedule_with_warmup
 
-from transformers import get_linear_schedule_with_warmup
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = BertForSequenceClassification
+model = RobertaForSequenceClassification
+tokenizer = RobertaTokenizer
 optimizer = AdamW
 scheduler = get_linear_schedule_with_warmup
 class_weights = np.array([3.,40.,1.])
@@ -19,8 +19,7 @@ trainer = ModelTrainer(
     initial_learning_rate,
     bert_tokenization = True, 
     input_already_vectorized = False,
-    batch_encode = True,
-    bert_tokenizer = BertTokenizer
+    bert_tokenizer = tokenizer
 )
 train_path = "./NLPProject/data/traindata.csv" ## change this back when running locally
 eval_path = "./NLPProject/data/devdata.csv" ## change this back when running locally
