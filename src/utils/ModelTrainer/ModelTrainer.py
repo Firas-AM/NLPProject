@@ -206,6 +206,6 @@ class ModelTrainer(object):
             train_path: str, 
             eval_path: str,
         ) -> NoneType:
-        train_dataset = VectorizedDataset(train_path, **self.kwargs)
-        eval_dataset = VectorizedDataset(eval_path, **self.kwargs)
+        train_dataset = VectorizedDataset(train_path, pretrained_encoder = self.pretrained_encoder, **self.kwargs)
+        eval_dataset = VectorizedDataset(eval_path, pretrained_encoder = self.pretrained_encoder, **self.kwargs)
         self.__train(train_dataset, eval_dataset)
