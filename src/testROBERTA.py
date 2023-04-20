@@ -25,13 +25,13 @@ trainer = ModelTrainer(
     bert_tokenization = True, 
     input_already_vectorized = False,
     bert_tokenizer = tokenizer,
-    pretrained_encoder = "roberta-large",
+    pretrained_encoder = "roberta-base",
     max_length = 256,
     model_name = "Roberta",
     patience = 15
 )
-train_path =  r".\data\traindata.csv"# change this back when running locally "./NLPProject/data/traindata.csv"
-eval_path = r".\data\traindata.csv"# change this back when running locally "./NLPProject/data/devdata.csv"
+train_path =  r"NLPProject\data\traindata.csv"# change this back when running locally "./NLPProject/data/traindata.csv"
+eval_path = r"NLPProject\data\traindata.csv"# change this back when running locally "./NLPProject/data/devdata.csv"
 
 
 trainer.train(

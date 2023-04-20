@@ -17,14 +17,13 @@ class CustomRobertaModel(torch.nn.Module):
     def __init__(
             self,
             pretrained_weights: str = "roberta-large",
-            linear_units: int = 1024,
             num_labels: int = 3,
             dropout_rate: float = 1e-1
         ) -> NoneType:
         super(CustomRobertaModel, self).__init__()
         self.pretrained_weights = pretrained_weights
         self.roberta = RobertaModel.from_pretrained(self.pretrained_weights)
-        self.linear_units = linear_units
+        self.linear_units = 1024 if self.pretrained_weights == "roberta-large" else 768
         self.num_labels = num_labels
         self.dropout_rate = dropout_rate 
         self.linear1 = torch.nn.Linear(self.linear_units, self.linear_units)
