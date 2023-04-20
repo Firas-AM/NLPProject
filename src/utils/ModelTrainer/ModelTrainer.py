@@ -29,7 +29,7 @@ class ModelTrainer(object):
             input_already_vectorized: bool = True,
             epochs: int = 100,
             patience: int = 5,
-            save_path: str = "./NLPProject/src/TrainedModels",
+            save_path: str = "./TrainedModels",
             model_name: str = "BaseModel",
             load_pretrained_weights: bool = False,
             **kwargs # for vectorized dataset
