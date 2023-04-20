@@ -4,10 +4,10 @@ import os
 
 import numpy as np
 
-from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score,classification_report
 from sklearn.utils.class_weight import compute_class_weight
+from tqdm import tqdm
 
 from ..DatasetVectorization.DatasetVectorization import *
 

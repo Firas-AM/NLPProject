@@ -30,7 +30,8 @@ trainer = ModelTrainer(
     pretrained_encoder = "roberta-large",
     max_length = 128,
     model_name = "Roberta",
-    patience = 15
+    patience = 15,
+    initial_learning_rate = 1e-5
 )
 train_path =  r"/content/NLPProject/data/traindata.csv"# change this back when running locally "./NLPProject/data/traindata.csv"
 eval_path = r"/content/NLPProject/data/devdata.csv"# change this back when running locally "./NLPProject/data/devdata.csv"
