@@ -63,13 +63,14 @@ class ModelTrainer(object):
         self.val_recalls = []
         self.val_f1s = []
         self.kwargs = kwargs # for vectorized dataset
+        self.best_accuracy = 0.0
     
     def __track_validation_progress(
             self,
         ) -> None:
-        best = min(self.val_losses)
-        current_loss = self.val_losses[-1]
-        if current_loss <= best:
+        current_accuracy = self.val_accuracies[-1]
+        if current_accuracy <= self.best_accuracy:
+            self.best_accuracy = current_accuracy
             self.epochs_with_no_improvement = 0
             torch.save(self.model, os.path.join(self.save_path, f"{self.model_name}-best.pt"))
         else: 
