@@ -92,7 +92,8 @@ class Classifier:
         """
         self.trainer.train(
           train_filename, 
-          dev_filename
+          dev_filename,
+          epochs = self.epochs
         )
 
 
