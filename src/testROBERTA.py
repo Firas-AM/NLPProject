@@ -30,8 +30,8 @@ trainer = ModelTrainer(
     model_name = "Roberta",
     patience = 15
 )
-train_path = "./NLPProject/data/traindata.csv" #r".\data\traindata.csv"# change this back when running locally
-eval_path = "./NLPProject/data/devdata.csv"# r".\data\traindata.csv"# change this back when running locally
+train_path =  r".\data\traindata.csv"# change this back when running locally "./NLPProject/data/traindata.csv"
+eval_path = r".\data\traindata.csv"# change this back when running locally "./NLPProject/data/devdata.csv"
 
 
 trainer.train(
