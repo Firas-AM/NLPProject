@@ -30,7 +30,8 @@ class ModelTrainer(object):
             epochs: int = 100,
             patience: int = 5,
             save_path: str = "./NLPProject/src/TrainedModels",
-            model_name: str = "BaseModel", 
+            model_name: str = "BaseModel",
+            load_pretrained_weights: bool = False,
             **kwargs # for vectorized dataset
         ) -> NoneType:
         self.model = model
@@ -47,6 +48,7 @@ class ModelTrainer(object):
         self.input_already_vectorized = input_already_vectorized
         self.epochs = epochs 
         self.patience = patience
+        self.load_pretrained_weights = load_pretrained_weights
         self.epochs_with_no_improvement = 0
         self.save_path = save_path
         self.model_name = model_name
@@ -80,7 +82,11 @@ class ModelTrainer(object):
             n_warmup_steps: int = 0 
         ) -> NoneType:
         num_training_steps = len(train_dataset) * self.epochs
-        self.model = self.model.from_pretrained(self.pretrained_encoder, num_labels = self.num_labels)
+        print(f"self.model {self.model}")
+        if self.load_pretrained_weights:
+            self.model = self.model.from_pretrained(self.pretrained_encoder, num_labels = self.num_labels)
+        else:
+            self.model = self.model()
         self.model = self.model.to(self.device)
         self.class_weights = torch.Tensor(self.class_weights).to(self.device) if isinstance(self.class_weights, np.ndarray)\
             else None
@@ -106,6 +112,7 @@ class ModelTrainer(object):
         self.model.train()
         train_preds = []; train_labels = []
         for batch in tqdm(train_dataloader):
+            self.optimizer.zero_grad()
             if self.input_already_vectorized:
                 inputs_ids, labels = batch
             else:
@@ -116,15 +123,16 @@ class ModelTrainer(object):
             self.optimizer.zero_grad()
             outputs = self.model(input_ids, labels = labels) if self.input_already_vectorized\
                 else self.model(input_ids, attention_mask=attention_mask, labels=labels)
-            loss = self.loss(outputs, labels) if self.loss\
+            #logits = outputs.logits
+            #print(f"outputs\n {outputs.size()}\n labels {labels.size()}")
+            loss = self.loss(outputs, labels.view(-1)) if self.loss\
                 else outputs.loss
-            logits = outputs.logits
             loss.backward()
             self.optimizer.step()
             if self.scheduler:
                 self.scheduler.step()
             train_loss += loss.item()
-            train_preds += torch.argmax(logits, axis=1).tolist()
+            train_preds += torch.argmax(outputs, axis=1).tolist()
             train_labels += labels.tolist()
             del input_ids, attention_mask, labels
             gc.collect()
@@ -156,11 +164,11 @@ class ModelTrainer(object):
                 self.optimizer.zero_grad()
                 outputs = self.model(input_ids, labels = labels) if self.input_already_vectorized\
                     else self.model(input_ids, attention_mask=attention_mask, labels=labels)
-                loss = self.loss(outputs, labels) if self.loss\
+                loss = self.loss(outputs, labels.view(-1)) if self.loss\
                     else outputs.loss
-                logits = outputs.logits
+                #logits = outputs.logits
                 eval_loss += loss.item() * input_ids.size(0)
-                val_preds += torch.argmax(logits, axis=1).tolist()
+                val_preds += torch.argmax(outputs, axis=1).tolist()
                 val_labels += labels.tolist()
                 del input_ids
                 gc.collect()
