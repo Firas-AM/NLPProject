@@ -32,7 +32,7 @@ class Classifier:
         class_weights: Union[np.ndarray, NoneType] = None,
         bert_tokenization: bool = True, 
         input_already_vectorized: bool = False,
-        epochs: int = 1, 
+        epochs: int = 100, 
         save_folder: str = "./TrainedModels",
         model_name: str = "roberta_large",
       ) -> NoneType:
@@ -117,7 +117,7 @@ class Classifier:
         )
         polarity_encoder = test_dataset.preprocesser.polarity_encoder
         test_dataloader = DataLoader(
-          dataset,
+          test_dataset,
         )
         self.model = torch.load(self.laod_path)
         with torch.no_grad():
