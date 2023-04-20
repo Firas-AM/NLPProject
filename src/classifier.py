@@ -72,7 +72,7 @@ class Classifier:
         pretrained_encoder = self.pretrained_encoder,
         max_length = self.max_length,
         model_name = self.model_name,
-        patience = self.patience
+        patience = self.patience,
         epochs = self.epochs
       )
 
