@@ -16,7 +16,7 @@ except ImportError:
 class CustomRobertaModel(torch.nn.Module):
     def __init__(
             self,
-            pretrained_weights: str = "roberta-base",
+            pretrained_weights: str = "roberta-large",
             linear_units: int = 768,
             num_labels: int = 3,
             dropout_rate: float = 1e-1
