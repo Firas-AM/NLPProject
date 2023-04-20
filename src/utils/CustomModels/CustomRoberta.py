@@ -42,7 +42,7 @@ class CustomRobertaModel(torch.nn.Module):
         )
         pooled_output = output.pooler_output
         pooled_output = self.linear1(pooled_output)
-        #pooled_output = self.relu(pooled_output)
+        pooled_output = torch.tanh(pooled_output)
         pooled_output = self.dropout(pooled_output)
         logits = self.linear2(pooled_output)
         return logits

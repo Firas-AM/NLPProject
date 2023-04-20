@@ -54,7 +54,7 @@ class Classifier:
       self.patience = patience
       self.save_folder = save_folder
       self.epochs = epochs
-      self.laod_path = os.path.join(
+      self.load_path = os.path.join(
         self.save_folder, 
         f"{self.model_name}-best.pt"
       )
@@ -119,7 +119,7 @@ class Classifier:
         test_dataloader = DataLoader(
           test_dataset,
         )
-        self.model = torch.load(self.laod_path)
+        self.model = torch.load(self.load_path)
         with torch.no_grad():
           for vectorized_sentence in test_dataloader:
             input_ids, attention_mask, labels = vectorized_sentence
