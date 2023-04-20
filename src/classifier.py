@@ -73,6 +73,7 @@ class Classifier:
         max_length = self.max_length,
         model_name = self.model_name,
         patience = self.patience
+        epochs = self.epochs
       )
 
     ############################################# comp
@@ -93,7 +94,6 @@ class Classifier:
         self.trainer.train(
           train_filename, 
           dev_filename,
-          epochs = self.epochs
         )
 
 
