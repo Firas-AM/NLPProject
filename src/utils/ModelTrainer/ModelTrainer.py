@@ -69,7 +69,7 @@ class ModelTrainer(object):
             self,
         ) -> None:
         current_accuracy = self.val_accuracies[-1]
-        if current_accuracy <= self.best_accuracy:
+        if current_accuracy >= self.best_accuracy:
             self.best_accuracy = current_accuracy
             self.epochs_with_no_improvement = 0
             torch.save(self.model, os.path.join(self.save_path, f"{self.model_name}-best.pt"))
