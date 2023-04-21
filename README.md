@@ -45,15 +45,24 @@ preprocessing steps, with maximum flexibility in the choice of how to do it. In 
 
 ## Feature Extraction
 
-TODO (word2Vec / TfIdfVectorization / etc.)
-
-In order to perform word vectorization, we use a pre-trained BERT model 
+For feature extraction, we used the pre-trained RoBERTa tokenizer to generate input IDs and attention masks. The tokenizer performed better than other techniques, such as removing punctuation, stopwords, tokenizing, lemmatizing, and vectorizing. The model used in this project is RoBERTa-large.
+To improve the tokenizer's ability to identify the target, we performed some preprocessing steps:
+First, we added special tokens before and after the target term in the sentence to emphasize it. We then transformed the category column into questions manually and added the same special tokens before and after the category question. We then concatenated the category question column and the sentence with special token column together. Our final step was to pass that to the tokenizer, which generated input IDs and attention masks that were used in the RoBERTa transformer model.
+For the tokenizer hyperparameters, we set the max length for padding to 128 to ensure every sentence is mapped to the same length, and add_special_tokens=True, which will add other special tokens to the beginning and end of the sentence.
 
 ## Models
 
-TODO (Trasnformers / BERT / LinearModels / etc.)
+For the model, we imported RoBERTaModel and added a classifier head ourselves, consisting of a linear layer, a dropout, and another linear layer. 
+
+We used the AdamW optimizer with a linear scheduler so that the learning rate would decrease to 0 with the epochs and our loss function was CrossEntropyLoss.
+
+Since the data is very unbalanced, we used a function to compute class weights and passed these weights to the loss function. This ensured that classes with fewer samples had more weight when computing losses. 
+
+We set the training epoch by a function, and stopped the training when the loss didn’t decrease for 5 epochs. We also had a patience attribute set to 15 to ensure at least 15 epochs of training.
+
+Finally, we wrote a function to save the model with the best accuracy, this function overwrites the current model if a better model is found in subsequent epochs.
 
 
 #### Authors
 
-Hassan AMRAOUI, Lorenzo CONSOLI, Firas MRAD, Jiayi WU
+Hassan AMRAOUI, Lorenzo CONSOLI, Firas ABO MRAD, Jiayi WU
