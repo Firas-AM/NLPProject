@@ -15,13 +15,7 @@ train_path =  r"/content/NLPProject/data/traindata.csv"# change this back when r
 eval_path = r"/content/NLPProject/data/devdata.csv"# change this back when running locally "./NLPProject/data/devdata.csv"
 
 
-initial_learning_rates = [
-    1e-5, 
-    2e-5, 
-    3e-5, 
-    4e-5, 
-    5e-5
-]
+initial_learning_rates = 1e-5
 
 for initial_learning_rate in initial_learning_rates:
     trainer = ModelTrainer(
